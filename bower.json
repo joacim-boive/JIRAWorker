@@ -1,0 +1,24 @@
+{
+  "name": "JIRAWorker",
+  "authors": [
+    "joacim.boive@gmail.com <gsxr750>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "chart.js": "^2.4.0",
+    "flatpickr": "flatpickr-calendar#^2.2.8",
+    "jquery-dateFormat": "^1.0.2"
+  }
+}

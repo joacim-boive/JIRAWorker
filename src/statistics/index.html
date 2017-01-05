@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JIRA Worklog Statistics</title>
+
+    <link rel="stylesheet" href="../../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../bower_components/flatpickr/dist/flatpickr.min.css">
+    <style>
+        body {
+            margin: 1%;
+        }
+
+        form{
+            max-width: 600px;
+        }
+
+        .glyphicon-calendar {
+            right: 25px;
+            color: rgb(161, 160, 171);
+        }
+    </style>
+
+    <script src="../../bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="../../bower_components/jquery-dateFormat/dist/jquery-dateFormat.min.js"></script>
+    <script src="../../bower_components/chart.js/dist/Chart.bundle.min.js"></script>
+    <script src="../../bower_components/flatpickr/dist/flatpickr.min.js"></script>
+</head>
+<body>
+<form class="form-inline">
+    <div class="flatpickr form-group col-xs-5">
+        <label for="dateFrom">From: </label>
+        <input id="dateFrom" placeholder="Pick a FROM date" data-input>
+        <span class="glyphicon glyphicon-calendar"></span>
+    </div>
+    <div class="flatpickr form-group col-xs-5">
+        <label for="dateTo">To: </label>
+        <input id="dateTo" placeholder="Pick a TO date" data-input>
+        <span class="glyphicon glyphicon-calendar"></span>
+    </div>
+    <div class="col-xs-2">
+        <button id='doIt' type="button" class="btn btn-primary">Get Data</button>
+    </div>
+</form>
+<canvas id="detailChart" width="400" height="400"></canvas>
+<canvas id="summaryChart" width="400" height="400"></canvas>
+<script src="js/script.js"></script>
+</body>
+</html>
