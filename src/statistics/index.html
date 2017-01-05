@@ -11,7 +11,7 @@
             margin: 1%;
         }
 
-        form{
+        form {
             max-width: 600px;
         }
 
@@ -27,20 +27,18 @@
     <script src="../../bower_components/flatpickr/dist/flatpickr.min.js"></script>
 </head>
 <body>
-<form class="form-inline">
-    <div class="flatpickr form-group col-xs-5">
+<form>
+    <span class="flatpickr">
         <label for="dateFrom">From: </label>
         <input id="dateFrom" placeholder="Pick a FROM date" data-input>
         <span class="glyphicon glyphicon-calendar"></span>
-    </div>
-    <div class="flatpickr form-group col-xs-5">
+    </span>
+    <span class="flatpickr">
         <label for="dateTo">To: </label>
         <input id="dateTo" placeholder="Pick a TO date" data-input>
         <span class="glyphicon glyphicon-calendar"></span>
-    </div>
-    <div class="col-xs-2">
-        <button id='doIt' type="button" class="btn btn-primary">Get Data</button>
-    </div>
+    </span>
+    <button id='doIt' type="button" class="btn btn-primary">Get Data</button>
 </form>
 <canvas id="detailChart" width="400" height="400"></canvas>
 <canvas id="summaryChart" width="400" height="400"></canvas>
