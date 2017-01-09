@@ -5,11 +5,6 @@ var authors = {};
 
 var init = function () {
     Flatpickr.l10ns.default.firstDayOfWeek = 1;
-    flatpickr(".flatpickr", {
-        wrap: true,
-        weekNumbers: true, // show week numbers
-        maxDate: new Date()
-    });
 
     $('input').on('change', function () {
         var data = {};
@@ -31,7 +26,13 @@ var init = function () {
         $('#dateFrom').val(storage['dateFrom']);
         $('#dateTo').val(storage['dateTo']);
 
-        getData(storage)
+        getData(storage);
+
+        flatpickr(".flatpickr", {
+            wrap: true,
+            weekNumbers: true, // show week numbers
+            maxDate: new Date()
+        });
     });
 };
 
@@ -79,8 +80,8 @@ var getData = function (config) {
     var getWorkLogDates = function () {
         var dates = getDates();
 
-        var from = dates.from.getFullYear() + '-' + (dates.from.getMonth() + 1) + '-' + (dates.from.getDay() + 1);
-        var to = dates.to.getFullYear() + '-' + (dates.to.getMonth() + 1) + '-' + (dates.to.getDay() + 1);
+        var from = dates.from.getFullYear() + '-' + (dates.from.getMonth() + 1) + '-' + dates.from.getDate();
+        var to = dates.to.getFullYear() + '-' + (dates.to.getMonth() + 1) + '-' + dates.to.getDate();
 
         return 'workLogDate >= ' + from + ' AND workLogDate <= ' + to;
     };
@@ -135,7 +136,7 @@ var getData = function (config) {
             var dataSummary = {};
             var datasetSummary = {};
             var key = 0;
-            var colors = ['red', 'green', 'black', 'orange', 'blue', 'brown', 'yellow', 'grey'];
+            var color = {};
             var count = 0;
             var user = '';
 
@@ -178,6 +179,8 @@ var getData = function (config) {
 
             for (var log in authors) {
                 if (authors.hasOwnProperty(log)) {
+                    color = new RColor;
+
                     user = log;
                     user = user.split('.');
                     user = user[0] + ' ' + user[1].substr(0, 1);
@@ -187,9 +190,9 @@ var getData = function (config) {
                     datasetDetails = {};
                     datasetDetails.data = [];
                     datasetDetails.label = user;
-                    datasetDetails.borderColor = colors[count];
+                    datasetDetails.borderColor = color.get(true);
 
-                    datasetSummary.backgroundColor.push(colors[count]);
+                    datasetSummary.backgroundColor.push(color.get(true));
 
                     count++;
 
