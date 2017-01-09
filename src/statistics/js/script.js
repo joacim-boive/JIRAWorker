@@ -4,6 +4,7 @@ var logs = [];
 var authors = {};
 
 var init = function () {
+
     Flatpickr.l10ns.default.firstDayOfWeek = 1;
 
     $('input').on('change', function () {
@@ -13,27 +14,39 @@ var init = function () {
         chrome.storage.local.set(data);
     });
 
-    $('button').on('click', init);
+    function getStorage(isNoInit){
+        workLogs = [];
+        logs = [];
+        authors = {};
 
-    chrome.storage.local.get({
-        'urlJIRA': '',
-        'username': '',
-        'password': '',
-        'users': '',
-        'dateFrom': '',
-        'dateTo': ''
-    }, function (storage) {
-        $('#dateFrom').val(storage['dateFrom']);
-        $('#dateTo').val(storage['dateTo']);
+        chrome.storage.local.get({
+            'urlJIRA': '',
+            'username': '',
+            'password': '',
+            'users': '',
+            'dateFrom': '',
+            'dateTo': ''
+        }, function (storage) {
 
-        getData(storage);
+            getData(storage);
 
-        flatpickr(".flatpickr", {
-            wrap: true,
-            weekNumbers: true, // show week numbers
-            maxDate: new Date()
+            if(!isNoInit){
+                $('#dateFrom').val(storage['dateFrom']);
+                $('#dateTo').val(storage['dateTo']);
+
+                flatpickr(".flatpickr", {
+                    wrap: true,
+                    weekNumbers: true, // show week numbers
+                    maxDate: new Date()
+                });
+            }
+
         });
-    });
+    }
+
+    getStorage();
+
+    $('button').on('click', function(){getStorage(true)});
 };
 
 var toBase64 = function (input) {
@@ -98,9 +111,7 @@ var getData = function (config) {
             'Authorization': 'Basic ' + credentials,
             'Content-Type': 'application/json'
         }
-    });
-
-    getJiras.then(function (jiras) {
+    }).then(function (jiras) {
         for (var i = 0, count = jiras.issues.length; i < count; i++) {
             workLogs.push($.ajax({
                     url: config.urlJIRA + '/rest/api/2/issue/' + jiras.issues[i].key + '/worklog',
@@ -115,7 +126,7 @@ var getData = function (config) {
                         'Content-Type': 'application/json'
                     }
                 }).then(function (logWorks) {
-                    logs.push(logWorks);
+                        logs.push(logWorks);
                 }).fail(function () {
                     console.info('AJAX Failed - Retrying: ' + this.tryCount);
 
@@ -154,7 +165,11 @@ var getData = function (config) {
 
             logs.forEach(function (log) {
                 log.worklogs.forEach(function (workLog) {
-                    dateLog = new Date(workLog.created).setHours(0, 0, 0, 0);
+                    if(config.users.indexOf(workLog.author.key) == -1){
+                        return;
+                    }
+
+                    dateLog = new Date(workLog.started).setHours(0, 0, 0, 0);
 
                     if (dateLog >= dates.from && dateLog <= dates.to) {
 
@@ -180,6 +195,7 @@ var getData = function (config) {
             for (var log in authors) {
                 if (authors.hasOwnProperty(log)) {
                     color = new RColor;
+                    color = color.get(true);
 
                     user = log;
                     user = user.split('.');
@@ -190,9 +206,9 @@ var getData = function (config) {
                     datasetDetails = {};
                     datasetDetails.data = [];
                     datasetDetails.label = user;
-                    datasetDetails.borderColor = color.get(true);
+                    datasetDetails.borderColor = color;
 
-                    datasetSummary.backgroundColor.push(color.get(true));
+                    datasetSummary.backgroundColor.push(color);
 
                     count++;
 
