@@ -80,6 +80,7 @@ var getData = function (config) {
 
     var getDates = function () {
         var dates = {};
+        var date = new Date();
 
         var from = config.dateFrom ? new Date(config.dateFrom) : new Date(date.setTime(date.getTime() - (7 * 86400000)));
         var to = config.dateTo ? new Date(config.dateTo) : new Date();
