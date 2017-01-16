@@ -3,8 +3,12 @@
     var init = function(){
         $('#JIRAWorkerSetup').find('input').change(function(){
             var data = {};
+            var thisValue = this.value.trim();
 
-            data[this.id] = this.value;
+            thisValue = thisValue.split(', ').join(',');
+            thisValue = thisValue.split(' ,').join(',');
+
+            data[this.id] = thisValue;
             chrome.storage.local.set(data);
         });
 

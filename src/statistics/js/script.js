@@ -66,7 +66,15 @@ var getData = function (config) {
 
     config.users = '';
     config.users = config.usersOne;
-    config.users += ',' + config.usersTwo;
+
+
+    if (config.usersTwo) {
+        if (config.users) {
+            config.users += ',' + config.usersTwo;
+        } else {
+            config.users = config.usersTwo;
+        }
+    }
 
     config.users = config.users.split(',');
     config.usersOne = config.usersOne.split(',');
@@ -165,6 +173,7 @@ var getData = function (config) {
             var color = {};
             var count = 0;
             var user = '';
+            var html = '';
 
             dates = getDates();
 
@@ -262,8 +271,6 @@ var getData = function (config) {
 
                 summaryData.datasets.push(summaryDataset);
 
-                debugger;
-
                 data.summary = summaryData;
                 data.details = detailsData;
 
@@ -293,13 +300,36 @@ var getData = function (config) {
                 });
             }
 
-            debugger;
+            html = '<div class="row">';
+            html += '<div class="col-md-6"><canvas id="r1c1"></canvas></div>';
+            html += '<div class="col-md-6"><canvas id="r1c2"></canvas></div>';
+            html += '</div>';
 
-            createChart('detailChartOne', dataTeamOne.details, 'line');
-            createChart('summaryChartOne', dataTeamOne.summary, 'bar');
+            if (dataTeamOne.details.datasets.length > 0 && dataTeamTwo.details.datasets.length > 0) {
+                html += '<div class="row">';
+                html += '<div class="col-md-6"><canvas id="r2c1"></canvas></div>';
+                html += '<div class="col-md-6"><canvas id="r2c2"></canvas></div>';
+                html += '</div>';
+            }
 
-            createChart('detailChartTwo', dataTeamTwo.details, 'line');
-            createChart('summaryChartTwo', dataTeamTwo.summary, 'bar');
+            document.getElementById('charts').innerHTML = html;
+
+            if (dataTeamOne.details.datasets.length > 0 && dataTeamTwo.details.datasets.length > 0) {
+                createChart('r1c1', dataTeamOne.details, 'line');
+                createChart('r1c2', dataTeamTwo.details, 'line');
+
+                createChart('r2c1', dataTeamOne.summary, 'bar');
+                createChart('r2c2', dataTeamTwo.summary, 'bar');
+            }else{
+                if (dataTeamOne.details.datasets.length > 0) {
+                    createChart('r1c1', dataTeamOne.details, 'line');
+                    createChart('r1c2', dataTeamOne.summary, 'bar');
+                }
+                if (dataTeamTwo.details.datasets.length > 0) {
+                    createChart('r1c1', dataTeamTwo.details, 'line');
+                    createChart('r1c2', dataTeamTwo.summary, 'bar');
+                }
+            }
         })
     });
 };
