@@ -14,7 +14,7 @@ var init = function () {
         chrome.storage.local.set(data);
     });
 
-    function getStorage(isNoInit){
+    function getStorage(isNoInit) {
         workLogs = [];
         logs = [];
         authors = {};
@@ -23,14 +23,17 @@ var init = function () {
             'urlJIRA': '',
             'username': '',
             'password': '',
-            'users': '',
+            'usersOne': '',
+            'usersOneLabel': '',
+            'usersTwo': '',
+            'usersTwoLabel': '',
             'dateFrom': '',
             'dateTo': ''
         }, function (storage) {
 
             getData(storage);
 
-            if(!isNoInit){
+            if (!isNoInit) {
                 $('#dateFrom').val(storage['dateFrom']);
                 $('#dateTo').val(storage['dateTo']);
 
@@ -46,7 +49,9 @@ var init = function () {
 
     getStorage();
 
-    $('button').on('click', function(){getStorage(true)});
+    $('button').on('click', function () {
+        getStorage(true)
+    });
 };
 
 var toBase64 = function (input) {
@@ -56,7 +61,20 @@ var toBase64 = function (input) {
 var getData = function (config) {
     var credentials = toBase64(config.username + ':' + config.password);
     var dates = {};
-    var datesArray = [];
+    var dataTeamOne = {};
+    var dataTeamTwo = {};
+
+    config.users = '';
+    config.users = config.usersOne;
+    config.users += ',' + config.usersTwo;
+
+    config.users = config.users.split(',');
+    config.usersOne = config.usersOne.split(',');
+    config.usersTwo = config.usersTwo.split(',');
+
+    config.users = config.users.filter(function (item, pos) {
+        return config.users.indexOf(item) == pos;
+    });
 
     var getBetweenDates = function (startDate, endDate) {
         var dates = [];
@@ -127,7 +145,7 @@ var getData = function (config) {
                         'Content-Type': 'application/json'
                     }
                 }).then(function (logWorks) {
-                        logs.push(logWorks);
+                    logs.push(logWorks);
                 }).fail(function () {
                     console.info('AJAX Failed - Retrying: ' + this.tryCount);
 
@@ -143,30 +161,17 @@ var getData = function (config) {
 
         $.when.apply($, workLogs).done(function () {
             var dateLog = null;
-            var dataDetails = {};
-            var datasetDetails = {};
-            var dataSummary = {};
-            var datasetSummary = {};
             var key = 0;
             var color = {};
             var count = 0;
             var user = '';
 
-            dataDetails.labels = getBetweenDates();
-            dataDetails.datasets = [];
             dates = getDates();
-
-            dataSummary.labels = [];
-            dataSummary.datasets = [];
-
-            datasetSummary.label = 'Summary for the period';
-            datasetSummary.backgroundColor = [];
-            datasetSummary.data = [];
 
 
             logs.forEach(function (log) {
                 log.worklogs.forEach(function (workLog) {
-                    if(config.users.indexOf(workLog.author.key) == -1){
+                    if (config.users.indexOf(workLog.author.key) == -1) {
                         return;
                     }
 
@@ -184,6 +189,7 @@ var getData = function (config) {
                             }
                         } else {
                             authors[workLog.author.emailAddress] = {};
+                            authors[workLog.author.emailAddress].key = workLog.author.key;
                             authors[workLog.author.emailAddress][dateLog] = {};
                             authors[workLog.author.emailAddress].total = workLog.timeSpentSeconds;
                             authors[workLog.author.emailAddress][dateLog].hours = workLog.timeSpentSeconds;
@@ -193,82 +199,107 @@ var getData = function (config) {
             });
 
 
-            for (var log in authors) {
-                if (authors.hasOwnProperty(log)) {
-                    color = new RColor;
-                    color = color.get(true);
+            function createDataset(keys, data, label) {
+                var detailsData = {};
+                var detailsDataset = {};
+                var summaryData = {};
+                var summaryDataset = {};
 
-                    user = log;
-                    user = user.split('.');
-                    user = user[0] + ' ' + user[1].substr(0, 1);
+                detailsData.labels = getBetweenDates();
+                detailsData.datasets = [];
 
-                    dataSummary.labels.push(user);
+                summaryData.labels = [];
+                summaryData.datasets = [];
 
-                    datasetDetails = {};
-                    datasetDetails.data = [];
-                    datasetDetails.label = user;
-                    datasetDetails.borderColor = color;
+                summaryDataset.label = label;
+                summaryDataset.backgroundColor = [];
+                summaryDataset.data = [];
 
-                    datasetSummary.backgroundColor.push(color);
+                for (var log in authors) {
+                    if (authors.hasOwnProperty(log)) {
+                        if (keys.indexOf(authors[log].key) != -1) { //Not a member of current set
 
-                    count++;
 
-                    for (var i = 0, datesLen = dataDetails.labels.length; i < datesLen; i++) {
-                        key = new Date(dataDetails.labels[i]).setHours(0, 0, 0, 0);
+                            color = new RColor;
+                            color = color.get(true);
 
-                        if (authors[log][key]) {
-                            if (authors[log][key].hours) {
-                                datasetDetails.data.push(authors[log][key].hours / 3600);
-                            } else {
-                                datasetDetails.data.push(0); //No time for this date
+                            user = log;
+                            user = user.split('.');
+                            user = user[0] + ' ' + user[1].substr(0, 1);
+
+                            summaryData.labels.push(user);
+
+                            detailsDataset = {};
+                            detailsDataset.data = [];
+                            detailsDataset.label = user;
+                            detailsDataset.borderColor = color;
+
+                            summaryDataset.backgroundColor.push(color);
+
+                            count++;
+
+                            for (var i = 0, datesLen = detailsData.labels.length; i < datesLen; i++) {
+                                key = new Date(detailsData.labels[i]).setHours(0, 0, 0, 0);
+
+                                if (authors[log][key]) {
+                                    if (authors[log][key].hours) {
+                                        detailsDataset.data.push(authors[log][key].hours / 3600);
+                                    } else {
+                                        detailsDataset.data.push(0); //No time for this date
+                                    }
+                                } else {
+                                    detailsDataset.data.push(0); //No time for this date
+                                }
                             }
-                        } else {
-                            datasetDetails.data.push(0); //No time for this date
+                            detailsData.datasets.push(detailsDataset);
+
+                            if (authors[log].total) {
+                                summaryDataset.data.push(authors[log].total / 3600);
+                            }
                         }
                     }
-                    dataDetails.datasets.push(datasetDetails);
-
-                    if (authors[log].total) {
-                        datasetSummary.data.push(authors[log].total / 3600);
-                    }
                 }
+
+                summaryData.datasets.push(summaryDataset);
+
+                debugger;
+
+                data.summary = summaryData;
+                data.details = detailsData;
+
+                return data;
             }
 
-            dataSummary.datasets.push(datasetSummary);
+            dataTeamOne = createDataset(config.usersOne, dataTeamOne, config.usersOneLabel);
+            dataTeamTwo = createDataset(config.usersTwo, dataTeamTwo, config.usersTwoLabel);
 
-            // authors[workLog.author.emailAddress].total
 
             Chart.defaults.global.elements.line.backgroundColor = 'transparent';
             Chart.defaults.global.elements.line.fill = false;
 
-            var detailChart = new Chart(document.getElementById('detailChart'), {
-                type: 'line',
-                data: dataDetails,
-                options: {
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            }
-                        }]
+            function createChart(id, data, type) {
+                return new Chart(document.getElementById(id), {
+                    type: type,
+                    data: data,
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
                     }
-                }
-            });
+                });
+            }
 
-            var summaryChart = new Chart(document.getElementById('summaryChart'), {
-                type: 'bar',
-                data: dataSummary,
-                options: {
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            }
-                        }]
-                    }
-                }
-            });
+            debugger;
 
+            createChart('detailChartOne', dataTeamOne.details, 'line');
+            createChart('summaryChartOne', dataTeamOne.summary, 'bar');
+
+            createChart('detailChartTwo', dataTeamTwo.details, 'line');
+            createChart('summaryChartTwo', dataTeamTwo.summary, 'bar');
         })
     });
 };
