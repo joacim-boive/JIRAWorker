@@ -1,7 +1,7 @@
 {
   "name": "JIRAWorker",
   "authors": [
-    "joacim.boive@gmail.com <gsxr750>"
+    "joacim.boive@gmail.com"
   ],
   "description": "",
   "main": "",
@@ -16,10 +16,10 @@
     "tests"
   ],
   "dependencies": {
-    "bootstrap": "^3.3.7",
-    "chart.js": "^2.4.0",
-    "flatpickr": "flatpickr-calendar#^2.2.8",
-    "jquery-dateFormat": "^1.0.2",
+    "bootstrap": "^3",
+    "chart.js": "^2",
+    "flatpickr": "flatpickr-calendar#^2",
+    "jquery-dateFormat": "^1",
     "RandomColor": "https://github.com/sterlingwes/RandomColor.git"
   }
 }
