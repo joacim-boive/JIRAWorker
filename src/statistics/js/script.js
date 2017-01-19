@@ -58,6 +58,56 @@ var toBase64 = function (input) {
     return window.btoa(unescape(encodeURIComponent(input)));
 };
 
+var velocity = (function () {
+    var data = {};
+
+    var init = function () {
+        data['velocity'] = {};
+        data = data['velocity'];
+        data.key = 'velocity';
+    };
+
+    var add = function (obj, key) {
+        if (data[key]) {
+            data[key].total += obj ? (obj.hours / 3600) : 0;
+            data[key].count++
+        } else {
+            data[key] = {};
+            data[key].total = obj ? obj.hours / 3600 : 0;
+            data[key].count = 1;
+        }
+    };
+
+    var average = function () {
+        var dataset = {};
+        var thisData = [];
+
+        for (var date in data) {
+            if (data.hasOwnProperty(date)) {
+                if (date.length === 13) {
+                    thisData.push(data[date].total / data[date].count);
+                }
+            }
+        }
+
+        dataset.data = thisData;
+        dataset.label = 'velocity';
+        dataset.borderColor = 'rgba(0,0,0,0.1)';
+        dataset.backgroundColor = 'rgba(182, 219, 251, 0.2)';
+        dataset.fill = true;
+        dataset.borderWidth = 2;
+        dataset.pointStyle = 'rect';
+
+        return dataset;
+    };
+
+    return {
+        init: init,
+        add: add,
+        average: average
+    }
+}());
+
 var getData = function (config) {
     var credentials = toBase64(config.username + ':' + config.password);
     var dates = {};
@@ -177,7 +227,6 @@ var getData = function (config) {
 
             dates = getDates();
 
-
             logs.forEach(function (log) {
                 log.worklogs.forEach(function (workLog) {
                     if (config.users.indexOf(workLog.author.key) == -1) {
@@ -224,11 +273,12 @@ var getData = function (config) {
                 summaryDataset.backgroundColor = [];
                 summaryDataset.data = [];
 
+
+                velocity.init();
+
                 for (var log in authors) {
                     if (authors.hasOwnProperty(log)) {
                         if (keys.indexOf(authors[log].key) != -1) { //Not a member of current set
-
-
                             color = new RColor;
                             color = color.get(true);
 
@@ -249,6 +299,7 @@ var getData = function (config) {
 
                             for (var i = 0, datesLen = detailsData.labels.length; i < datesLen; i++) {
                                 key = new Date(detailsData.labels[i]).setHours(0, 0, 0, 0);
+                                velocity.add(authors[log][key], key)
 
                                 if (authors[log][key]) {
                                     if (authors[log][key].hours) {
@@ -269,6 +320,8 @@ var getData = function (config) {
                     }
                 }
 
+                detailsData.datasets.push(velocity.average());
+
                 summaryData.datasets.push(summaryDataset);
 
                 data.summary = summaryData;
@@ -280,9 +333,9 @@ var getData = function (config) {
             dataTeamOne = createDataset(config.usersOne, dataTeamOne, config.usersOneLabel);
             dataTeamTwo = createDataset(config.usersTwo, dataTeamTwo, config.usersTwoLabel);
 
-
-            Chart.defaults.global.elements.line.backgroundColor = 'transparent';
             Chart.defaults.global.elements.line.fill = false;
+            Chart.defaults.global.legend.labels.boxWidth = 4;
+            Chart.defaults.global.elements.tension = 0.2;
 
             function createChart(id, data, type) {
                 return new Chart(document.getElementById(id), {
@@ -320,7 +373,7 @@ var getData = function (config) {
 
                 createChart('r2c1', dataTeamOne.summary, 'bar');
                 createChart('r2c2', dataTeamTwo.summary, 'bar');
-            }else{
+            } else {
                 if (dataTeamOne.details.datasets.length > 0) {
                     createChart('r1c1', dataTeamOne.details, 'line');
                     createChart('r1c2', dataTeamOne.summary, 'bar');
