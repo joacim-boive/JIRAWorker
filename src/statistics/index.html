@@ -24,6 +24,31 @@
             right: 25px;
             color: rgb(161, 160, 171);
         }
+
+        canvas{
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        #chartjs-tooltip {
+            opacity: 1;
+            position: absolute;
+            background: rgba(0, 0, 0, .7);
+            color: white;
+            border-radius: 3px;
+            -webkit-transition: all .1s ease;
+            transition: all .1s ease;
+            pointer-events: none;
+            -webkit-transform: translate(-50%, 0);
+            transform: translate(-50%, 0);
+        }
+
+        .chartjs-tooltip-key {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-right: 10px;
+        }
     </style>
 
     <script src="../../bower_components/jquery/dist/jquery.min.js"></script>
@@ -47,6 +72,8 @@
     <button id='doIt' type="button" class="btn btn-primary">Get Data</button>
 </form>
 <div class="container-fluid" id="charts"></div>
+<div id="velocityOne"></div>
+<div id="velocityTwo"></div>
 <script src="js/script.js"></script>
 </body>
 </html>

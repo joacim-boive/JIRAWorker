@@ -58,6 +58,64 @@ var toBase64 = function (input) {
     return window.btoa(unescape(encodeURIComponent(input)));
 };
 
+var velocity = (function () {
+    var data = {};
+
+    var init = function () {
+        data['VELOCITY'] = {};
+        data = data['VELOCITY'];
+        data.key = 'VELOCITY';
+        data.total = 0;
+    };
+
+    var add = function (obj, key) {
+        if (data[key]) {
+            data[key].total += obj ? (obj.hours / 3600) : 0;
+            data[key].count++
+        } else {
+            data[key] = {};
+            data[key].total = obj ? obj.hours / 3600 : 0;
+            data[key].count = 1;
+        }
+    };
+
+    var average = function () {
+        var dataset = {};
+        var thisData = [];
+        var total = 0;
+        var average = 0;
+
+        for (var date in data) {
+            if (data.hasOwnProperty(date)) {
+                if (date.length === 13) { //This is a dateTime in milliseconds
+                    average = data[date].total / data[date].count;
+                    thisData.push(average);
+                    total += average;
+                }
+            }
+        }
+
+        dataset.data = thisData;
+        dataset.label = 'VELOCITY';
+        dataset.borderColor = 'rgba(0,0,0,0.1)';
+        dataset.backgroundColor = 'rgba(182, 219, 251, 0.2)';
+        dataset.fill = true;
+        dataset.borderWidth = 2;
+        dataset.pointStyle = 'rect';
+
+        dataset.total = total;
+
+        return dataset;
+    };
+
+
+    return {
+        init: init,
+        add: add,
+        average: average
+    }
+}());
+
 var getData = function (config) {
     var credentials = toBase64(config.username + ':' + config.password);
     var dates = {};
@@ -177,7 +235,6 @@ var getData = function (config) {
 
             dates = getDates();
 
-
             logs.forEach(function (log) {
                 log.worklogs.forEach(function (workLog) {
                     if (config.users.indexOf(workLog.author.key) == -1) {
@@ -208,11 +265,12 @@ var getData = function (config) {
             });
 
 
-            function createDataset(keys, data, label) {
+            function createDataset(keys, data, label, id) {
                 var detailsData = {};
                 var detailsDataset = {};
                 var summaryData = {};
                 var summaryDataset = {};
+                var thisVelocity = {};
 
                 detailsData.labels = getBetweenDates();
                 detailsData.datasets = [];
@@ -224,11 +282,12 @@ var getData = function (config) {
                 summaryDataset.backgroundColor = [];
                 summaryDataset.data = [];
 
+
+                velocity.init();
+
                 for (var log in authors) {
                     if (authors.hasOwnProperty(log)) {
                         if (keys.indexOf(authors[log].key) != -1) { //Not a member of current set
-
-
                             color = new RColor;
                             color = color.get(true);
 
@@ -249,6 +308,7 @@ var getData = function (config) {
 
                             for (var i = 0, datesLen = detailsData.labels.length; i < datesLen; i++) {
                                 key = new Date(detailsData.labels[i]).setHours(0, 0, 0, 0);
+                                velocity.add(authors[log][key], key);
 
                                 if (authors[log][key]) {
                                     if (authors[log][key].hours) {
@@ -269,7 +329,14 @@ var getData = function (config) {
                     }
                 }
 
+                thisVelocity = velocity.average();
+
+                // $('#' + id).html(Math.round(((thisVelocity.total / thisVelocity.data.length) / 8) * 100));
+
+                detailsData.datasets.push(thisVelocity);
+
                 summaryData.datasets.push(summaryDataset);
+                summaryData.datasets.push(thisVelocity);
 
                 data.summary = summaryData;
                 data.details = detailsData;
@@ -277,14 +344,94 @@ var getData = function (config) {
                 return data;
             }
 
-            dataTeamOne = createDataset(config.usersOne, dataTeamOne, config.usersOneLabel);
-            dataTeamTwo = createDataset(config.usersTwo, dataTeamTwo, config.usersTwoLabel);
+            dataTeamOne = createDataset(config.usersOne, dataTeamOne, config.usersOneLabel, 'velocityOne');
+            dataTeamTwo = createDataset(config.usersTwo, dataTeamTwo, config.usersTwoLabel, 'velocityTwo');
 
-
-            Chart.defaults.global.elements.line.backgroundColor = 'transparent';
             Chart.defaults.global.elements.line.fill = false;
+            Chart.defaults.global.legend.labels.boxWidth = 4;
+            Chart.defaults.global.elements.tension = 0.2;
+
+            var customTooltips = function(tooltip) {
+                // Tooltip Element
+                var tooltipEl = document.getElementById('chartjs-tooltip');
+
+
+                if (!tooltipEl) {
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.id = 'chartjs-tooltip';
+                    tooltipEl.innerHTML = "<table></table>";
+                    document.body.appendChild(tooltipEl);
+                }
+
+                // Hide if no tooltip
+                if (tooltip.opacity === 0) {
+                    tooltipEl.style.opacity = 0;
+                    return;
+                }
+
+                // Set caret Position
+                tooltipEl.classList.remove('above', 'below', 'no-transform');
+                if (tooltip.yAlign) {
+                    tooltipEl.classList.add(tooltip.yAlign);
+                } else {
+                    tooltipEl.classList.add('no-transform');
+                }
+
+                function getBody(bodyItem) {
+                    return bodyItem.lines;
+                }
+
+                // Set Text
+                if (tooltip.body) {
+                    var titleLines = tooltip.title || [];
+                    var bodyLines = tooltip.body.map(getBody);
+
+                    var innerHtml = '<thead>';
+
+                    titleLines.forEach(function(title) {
+                        innerHtml += '<tr><th>' + title + '</th></tr>';
+                    });
+                    innerHtml += '</thead><tbody>';
+
+                    bodyLines.forEach(function(body, i) {
+                        var colors = tooltip.labelColors[i];
+                        var style = 'background:' + colors.backgroundColor;
+                        style += '; border-color:' + colors.borderColor;
+                        style += '; border-width: 2px';
+                        var span = '<span class="chartjs-tooltip-key" style="' + style + '"></span>';
+                        innerHtml += '<tr><td>' + span + body + '</td></tr>';
+                    });
+                    innerHtml += '</tbody>';
+
+                    var tableRoot = tooltipEl.querySelector('table');
+                    tableRoot.innerHTML = innerHtml;
+                }
+
+                var position = this._chart.canvas.getBoundingClientRect();
+
+                // Display, position, and set styles for font
+                tooltipEl.style.opacity = 1;
+                tooltipEl.style.left = position.left + tooltip.caretX + 'px';
+                tooltipEl.style.top = position.top + tooltip.caretY + 'px';
+                // tooltipEl.style.fontFamily = tooltip._fontFamily;
+                // tooltipEl.style.fontSize = tooltip.fontSize;
+                // tooltipEl.style.fontStyle = tooltip._fontStyle;
+                tooltipEl.style.padding = tooltip.yPadding + 'px ' + tooltip.xPadding + 'px';
+            };
 
             function createChart(id, data, type) {
+                var thisVelocity = {};
+                var velocity = 0;
+
+                if(type === 'bar'){
+                    thisVelocity = data.datasets[1];
+                    velocity = Math.round(((thisVelocity.total / thisVelocity.data.length) / 8) * 100);
+
+                    data.datasets[0].label += ' - Current Velocity: ' + velocity + '%';
+
+                    data.datasets.splice(-1,1);
+                }
+
                 return new Chart(document.getElementById(id), {
                     type: type,
                     data: data,
@@ -320,7 +467,7 @@ var getData = function (config) {
 
                 createChart('r2c1', dataTeamOne.summary, 'bar');
                 createChart('r2c2', dataTeamTwo.summary, 'bar');
-            }else{
+            } else {
                 if (dataTeamOne.details.datasets.length > 0) {
                     createChart('r1c1', dataTeamOne.details, 'line');
                     createChart('r1c2', dataTeamOne.summary, 'bar');
