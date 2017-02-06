@@ -271,6 +271,7 @@ var getData = function (config) {
                 var summaryData = {};
                 var summaryDataset = {};
                 var thisVelocity = {};
+                var newColor = {};
 
                 detailsData.labels = getBetweenDates();
                 detailsData.datasets = [];
@@ -285,11 +286,13 @@ var getData = function (config) {
 
                 velocity.init();
 
+                color = new RColor;
+                color.goldenRatio = 1.61;
+
                 for (var log in authors) {
                     if (authors.hasOwnProperty(log)) {
                         if (keys.indexOf(authors[log].key) != -1) { //Not a member of current set
-                            color = new RColor;
-                            color = color.get(true);
+                            newColor = color.get(true);
 
                             user = log;
                             user = user.split('.');
@@ -300,9 +303,9 @@ var getData = function (config) {
                             detailsDataset = {};
                             detailsDataset.data = [];
                             detailsDataset.label = user;
-                            detailsDataset.borderColor = color;
+                            detailsDataset.borderColor = newColor;
 
-                            summaryDataset.backgroundColor.push(color);
+                            summaryDataset.backgroundColor.push(newColor);
 
                             count++;
 
